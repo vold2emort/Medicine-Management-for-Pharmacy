@@ -1,21 +1,31 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils.translation import gettext_lazy as _
 
-class CustomUser(AbstractUser):
-    role = models.CharField(max_length=20, choices=[('staff','Staff'),('customer','Customer')])
+from .managers import CustomUserManager
+from core.models import TimeStampedModel, Role
+
+class User(AbstractUser, TimeStampedModel):
+    username = None
+    email = models.EmailField(_("email address"), unique=True)
+    first_name = models.CharField(max_length=50)
+    last_name = models.CharField(max_length=50)
     
-    groups = models.ManyToManyField(
-        'auth.Group',
-        related_name='customuser_set',  # override default
-        blank=True,
-        help_text='The groups this user belongs to.',
-        verbose_name='groups'
+    role = models.CharField(
+        max_length=20,
+        choices=Role.choices,
+        default=Role.CUSTOMER
     )
+    
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["first_name", "last_name"]
+    
+    objects = CustomUserManager()
+    
+    def __str__(self):
+        return f"{self.email} ({self.role})"
+    
+    
 
-    user_permissions = models.ManyToManyField(
-        'auth.Permission',
-        related_name='customuser_permissions_set',
-        blank=True,
-        help_text='Specific permissions for this user.',
-        verbose_name='user permissions'
-    )
+
+
