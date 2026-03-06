@@ -21,3 +21,49 @@ class LogoutView(APIView):
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
+    
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.response import Response
+from users.serializers import LoginSerializer
+
+
+class LoginView(TokenObtainPairView):
+    serializer_class = LoginSerializer
+    
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        
+        access = response.data.get("access")
+        refresh = response.data.get("refresh")
+        user = response.data.get("user")
+        print(user)
+        
+        res = Response(response.data)
+        
+        res.set_cookie(
+            key="access_token",
+            value=access,
+            httponly=True,
+            samesite="None",
+            secure=True,
+            path="/"
+        )
+        
+        res.set_cookie(
+            key="refresh_token",
+            value=refresh,
+            httponly=True,
+            secure=True,
+            samesite="None",
+            path="/"
+        )
+        
+        res.set_cookie(
+            key="role",
+            value=user["role"],
+            httponly=True,
+            samesite="None",
+            secure=True,
+            path="/"
+        )
+        return res
